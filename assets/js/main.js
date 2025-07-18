@@ -156,6 +156,7 @@ window.addEventListener('load', function() {
     preloader.classList.add('hide');
 });
 
+
 // ScrollBtn JS
 window.onscroll = function() { scrollFunction() };
 
