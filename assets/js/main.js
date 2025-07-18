@@ -1,262 +1,169 @@
-/*
-	Editorial by HTML5 UP
-	html5up.net | @ajlkn
-	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
-*/
 
-(function($) {
-
-	var	$window = $(window),
-		$head = $('head'),
-		$body = $('body');
-
-	// Breakpoints.
-		breakpoints({
-			xlarge:   [ '1281px',  '1680px' ],
-			large:    [ '981px',   '1280px' ],
-			medium:   [ '737px',   '980px'  ],
-			small:    [ '481px',   '736px'  ],
-			xsmall:   [ '361px',   '480px'  ],
-			xxsmall:  [ null,      '360px'  ],
-			'xlarge-to-max':    '(min-width: 1681px)',
-			'small-to-xlarge':  '(min-width: 481px) and (max-width: 1680px)'
-		});
-
-	// Stops animations/transitions until the page has ...
-
-		// ... loaded.
-			$window.on('load', function() {
-				window.setTimeout(function() {
-					$body.removeClass('is-preload');
-				}, 100);
-			});
-
-		// ... stopped resizing.
-			var resizeTimeout;
-
-			$window.on('resize', function() {
-
-				// Mark as resizing.
-					$body.addClass('is-resizing');
-
-				// Unmark after delay.
-					clearTimeout(resizeTimeout);
-
-					resizeTimeout = setTimeout(function() {
-						$body.removeClass('is-resizing');
-					}, 100);
-
-			});
-
-	// Fixes.
-
-		// Object fit images.
-			if (!browser.canUse('object-fit')
-			||	browser.name == 'safari')
-				$('.image.object').each(function() {
-
-					var $this = $(this),
-						$img = $this.children('img');
-
-					// Hide original image.
-						$img.css('opacity', '0');
-
-					// Set background.
-						$this
-							.css('background-image', 'url("' + $img.attr('src') + '")')
-							.css('background-size', $img.css('object-fit') ? $img.css('object-fit') : 'cover')
-							.css('background-position', $img.css('object-position') ? $img.css('object-position') : 'center');
-
-				});
-
-	// Sidebar.
-		var $sidebar = $('#sidebar'),
-			$sidebar_inner = $sidebar.children('.inner');
-
-		// Inactive by default on <= large.
-			breakpoints.on('<=large', function() {
-				$sidebar.addClass('inactive');
-			});
-
-			breakpoints.on('>large', function() {
-				$sidebar.removeClass('inactive');
-			});
-
-		// Hack: Workaround for Chrome/Android scrollbar position bug.
-			if (browser.os == 'android'
-			&&	browser.name == 'chrome')
-				$('<style>#sidebar .inner::-webkit-scrollbar { display: none; }</style>')
-					.appendTo($head);
-
-		// Toggle.
-			$('<a href="#sidebar" class="toggle">Toggle</a>')
-				.appendTo($sidebar)
-				.on('click', function(event) {
-
-					// Prevent default.
-						event.preventDefault();
-						event.stopPropagation();
-
-					// Toggle.
-						$sidebar.toggleClass('inactive');
-
-				});
-
-		// Events.
-
-			// Link clicks.
-				$sidebar.on('click', 'a', function(event) {
-
-					// >large? Bail.
-						if (breakpoints.active('>large'))
-							return;
-
-					// Vars.
-						var $a = $(this),
-							href = $a.attr('href'),
-							target = $a.attr('target');
-
-					// Prevent default.
-						event.preventDefault();
-						event.stopPropagation();
-
-					// Check URL.
-						if (!href || href == '#' || href == '')
-							return;
-
-					// Hide sidebar.
-						$sidebar.addClass('inactive');
-
-					// Redirect to href.
-						setTimeout(function() {
-
-							if (target == '_blank')
-								window.open(href);
-							else
-								window.location.href = href;
-
-						}, 500);
-
-				});
-
-			// Prevent certain events inside the panel from bubbling.
-				$sidebar.on('click touchend touchstart touchmove', function(event) {
-
-					// >large? Bail.
-						if (breakpoints.active('>large'))
-							return;
-
-					// Prevent propagation.
-						event.stopPropagation();
-
-				});
-
-			// Hide panel on body click/tap.
-				$body.on('click touchend', function(event) {
-
-					// >large? Bail.
-						if (breakpoints.active('>large'))
-							return;
-
-					// Deactivate.
-						$sidebar.addClass('inactive');
-
-				});
-
-		// Scroll lock.
-		// Note: If you do anything to change the height of the sidebar's content, be sure to
-		// trigger 'resize.sidebar-lock' on $window so stuff doesn't get out of sync.
-
-			$window.on('load.sidebar-lock', function() {
-
-				var sh, wh, st;
-
-				// Reset scroll position to 0 if it's 1.
-					if ($window.scrollTop() == 1)
-						$window.scrollTop(0);
-
-				$window
-					.on('scroll.sidebar-lock', function() {
-
-						var x, y;
-
-						// <=large? Bail.
-							if (breakpoints.active('<=large')) {
-
-								$sidebar_inner
-									.data('locked', 0)
-									.css('position', '')
-									.css('top', '');
-
-								return;
-
-							}
-
-						// Calculate positions.
-							x = Math.max(sh - wh, 0);
-							y = Math.max(0, $window.scrollTop() - x);
-
-						// Lock/unlock.
-							if ($sidebar_inner.data('locked') == 1) {
-
-								if (y <= 0)
-									$sidebar_inner
-										.data('locked', 0)
-										.css('position', '')
-										.css('top', '');
-								else
-									$sidebar_inner
-										.css('top', -1 * x);
-
-							}
-							else {
-
-								if (y > 0)
-									$sidebar_inner
-										.data('locked', 1)
-										.css('position', 'fixed')
-										.css('top', -1 * x);
-
-							}
-
-					})
-					.on('resize.sidebar-lock', function() {
-
-						// Calculate heights.
-							wh = $window.height();
-							sh = $sidebar_inner.outerHeight() + 30;
-
-						// Trigger scroll.
-							$window.trigger('scroll.sidebar-lock');
-
-					})
-					.trigger('resize.sidebar-lock');
-
-				});
-
-	// Menu.
-		var $menu = $('#menu'),
-			$menu_openers = $menu.children('ul').find('.opener');
-
-		// Openers.
-			$menu_openers.each(function() {
-
-				var $this = $(this);
-
-				$this.on('click', function(event) {
-
-					// Prevent default.
-						event.preventDefault();
-
-					// Toggle.
-						$menu_openers.not($this).removeClass('active');
-						$this.toggleClass('active');
-
-					// Trigger resize (sidebar lock).
-						$window.triggerHandler('resize.sidebar-lock');
-
-				});
-
-			});
-
-})(jQuery);
+//Navbar toggle icon
+function navbar_toggler() {
+    $('.navbar-toggler[data-toggle=collapse]').click(function () {
+        if ($(".navbar-toggler[data-bs-toggle=collapse] i").hasClass('fa-bars')) {
+        } else {
+            $(".navbar-toggler[data-bs-toggle=collapse] i").removeClass("fa-times");
+        }
+    });
+  }
+  navbar_toggler();
+  
+// Navbar clone in mobile device
+function navClone() {
+    $('.js-clone-nav').each(function () {
+        var $this = $(this);
+        $this.clone().attr('class', 'navbar-nav ml-auto').appendTo('.d2c_mobile_view_body');
+    });
+
+    $('.d2c_mobile_view .nav-link').click(function () {
+        $(".nav-link").removeClass("active");
+        $('.d2c_mobile_view').removeClass('show');
+        $(this).toggleClass('active');
+    });
+    }
+    navClone();
+
+// Counter JS
+$(function () {
+    let visibilityIds = ['#counters_1'];
+    let counterClass = '.count';
+    let defaultSpeed = 3000;
+  
+    $(window).on('scroll', function () {
+        getVisibilityStatus();
+    });
+    getVisibilityStatus();
+
+    function getVisibilityStatus() {
+        elValFromTop = [];
+        var windowHeight = $(window).height(),
+            windowScrollValFromTop = $(this).scrollTop();
+  
+        visibilityIds.forEach(function (item, index) {
+            try {
+                elValFromTop[index] = Math.ceil($(item).offset().top);
+            } catch (err) {
+                return;
+            }
+            if ((windowHeight + windowScrollValFromTop) > elValFromTop[index]) {
+                counter_init(item);
+            }
+        });
+    }
+
+    function counter_init(groupId) {
+        let num, speed, direction, index = 0;
+        $(counterClass).each(function () {
+            num = $(this).attr('data-TargetNum');
+            speed = $(this).attr('data-Speed');
+            direction = $(this).attr('data-Direction');
+            easing = $(this).attr('data-Easing');
+            if (speed == undefined) speed = defaultSpeed;
+            $(this).addClass('c_' + index);
+            doCount(num, index, speed, groupId, direction, easing);
+            index++;
+        });
+    }
+
+    function doCount(num, index, speed, groupClass, direction, easing) {
+        let className = groupClass + ' ' + counterClass + '.' + 'c_' + index;
+        if(easing == undefined) easing = "swing";
+        $(className).animate({
+            num
+        }, {
+            duration: +speed,
+            easing: easing,
+            step: function (now) {
+                if (direction == 'reverse') {
+                    $(this).text(num - Math.floor(now));
+                } else {
+                    $(this).text(Math.floor(now));
+                }
+            },
+            complete: doCount
+        });
+    }
+  });
+
+// Testimonial Slider
+$('.d2c_testimonial_slider').slick({
+    centerMode: true,
+    centerPadding: '0px',
+    dots: false,
+    arrows: true,
+    infinite: true,
+    autoplay:true,
+    speed: 2000,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    prevArrow: '<button type="button" class="d2c_carousel_left_btn" aria-label="carousel-control"><i class="fas fa-chevron-left"></i></button>',
+    nextArrow: '<button type="button" class="d2c_carousel_right_btn" aria-label="carousel-control"><i class="fas fa-chevron-right"></i></button>',
+    responsive: [
+        {
+        breakpoint: 1400,
+        settings: {
+            slidesToShow: 1,
+        }
+        },
+        {
+        breakpoint: 1200,
+        settings: {
+            slidesToShow: 1,
+        }
+        },
+        {
+        breakpoint: 992,
+        settings: {
+            slidesToShow: 1,
+        }
+        },
+        {
+        breakpoint: 480,
+        settings: {
+            slidesToShow: 1,
+        }
+        }
+    ]
+});
+
+// Form Validation JS
+(function () {
+    'use strict'
+  
+    var forms = document.querySelectorAll('.needs-validation')
+  
+    Array.prototype.slice.call(forms)
+      .forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+          if (!form.checkValidity()) {
+            event.preventDefault()
+            event.stopPropagation()
+          }
+  
+          form.classList.add('was-validated')
+        }, false)
+      })
+  })();
+
+// WOW JS
+    new WOW().init();
+
+// Preloader JS
+window.addEventListener('load', function() {
+    var preloader = document.querySelector('.preloader');
+    preloader.classList.add('hide');
+});
+
+// ScrollBtn JS
+window.onscroll = function() { scrollFunction() };
+
+    function scrollFunction() {
+    var scrollBtn = document.getElementById("scrollBtn");
+    if (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) {
+        scrollBtn.classList.add("show");
+    } else {
+        scrollBtn.classList.remove("show");
+    }
+}
